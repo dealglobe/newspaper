@@ -763,13 +763,21 @@ class ContentExtractor(object):
                 tags.append(tag)
         return set(tags)
 
-    def calculate_best_node(self, doc):
-        top_node = None
-        nodes_to_check = self.nodes_to_check(doc)
-        starting_boost = float(1.0)
-        cnt = 0
-        i = 0
-        parent_nodes = []
+    def calculate_best_node(self,doc):
+        parent_nodes = self.get_parent_nodes(doc)
+        return self.highest_scoring_node(parent_nodes)
+
+    def node_stats(self,nodes_to_check):
+        stats = [] 
+        for node in nodes_to_check:
+            text_node = self.parser.getText(node)
+            word_stats = self.stopwords_class(language=self.language). \
+                get_stopword_count(text_node)
+            high_link_density = self.is_highlink_density(node)
+            stats.append((text_node,word_stats.get_stopword_count(),high_link_density))
+        return stats 
+
+    def get_nodes_with_text(self,nodes_to_check):
         nodes_with_text = []
 
         for node in nodes_to_check:
@@ -779,6 +787,26 @@ class ContentExtractor(object):
             high_link_density = self.is_highlink_density(node)
             if word_stats.get_stopword_count() > 2 and not high_link_density:
                 nodes_with_text.append(node)
+
+        return nodes_with_text 
+
+    def get_parent_nodes(self, doc):
+        top_node = None
+        nodes_to_check = self.nodes_to_check(doc)
+        starting_boost = float(1.0)
+        cnt = 0
+        i = 0
+        parent_nodes = []
+        nodes_with_text = self.get_nodes_with_text(nodes_to_check)
+#        nodes_with_text = []
+
+ #       for node in nodes_to_check:
+ #           text_node = self.parser.getText(node)
+ ##           word_stats = self.stopwords_class(language=self.language). \
+ #               get_stopword_count(text_node)
+ #           high_link_density = self.is_highlink_density(node)
+ #           if word_stats.get_stopword_count() > 2 and not high_link_density:
+ #               nodes_with_text.append(node)
 
         nodes_number = len(nodes_with_text)
         negative_scoring = 0
@@ -822,7 +850,15 @@ class ContentExtractor(object):
                     parent_nodes.append(parent_parent_node)
             cnt += 1
             i += 1
+        return parent_nodes
+   
+    def node_scores(self,parent_nodes):
+        return [self.get_score(p) for p in parent_nodes]
+ 
+    def node_text_content(self,parent_nodes):
+        return [p.text_content() for p in parent_nodes]
 
+    def highest_scoring_node(self,parent_nodes):
         top_node_score = 0
         for e in parent_nodes:
             score = self.get_score(e)
