@@ -55,7 +55,7 @@ def stats_from_file(fname):
     resp = fake_response_from_file(fname)
     article = create_article(resp)
     nodes = get_article_nodes(article)
-    stats = article.extractor.node_stats(nodes) 
+    stats = article.extractor.node_stats_ex(nodes)
     return stats
  
 if __name__ == '__main__':
