@@ -777,6 +777,18 @@ class ContentExtractor(object):
             stats.append((text_node,word_stats.get_stopword_count(),high_link_density))
         return stats 
 
+
+    def node_stats_ex(self,nodes_to_check):
+        stats = []
+        for node in nodes_to_check:
+            text_node = self.parser.getText(node)
+            word_stats = self.stopwords_class(language=self.language). \
+                get_stopword_count(text_node)
+            high_link_density = self.is_highlink_density(node)
+            stopwords = word_stats.get_stop_words()
+            stats.append((text_node,word_stats.get_stopword_count(),high_link_density, ','.join(stopwords)))
+        return stats
+
     def get_nodes_with_text(self,nodes_to_check):
         nodes_with_text = []
 
